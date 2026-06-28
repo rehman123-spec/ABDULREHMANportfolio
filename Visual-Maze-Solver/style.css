@@ -1,0 +1,319 @@
+/* ═══════════════════════════════════════════════════════════
+   Visual Maze Solver — Interactive Web Demo
+   style.css
+   ═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-deep:      #060b14;
+  --bg-card:      rgba(12, 18, 32, 0.85);
+  --bg-glass:     rgba(255, 255, 255, 0.04);
+  --border:       rgba(255, 255, 255, 0.08);
+  --border-glow:  rgba(6, 182, 212, 0.35);
+
+  --accent:       #06b6d4;      /* cyan */
+  --accent2:      #6366f1;      /* indigo */
+  --success:      #22c55e;      /* green  — path */
+  --warn:         #eab308;      /* yellow — frontier */
+  --danger:       #ef4444;      /* red    — end marker */
+  --visited-col:  #1e3a5f;      /* dark blue — visited */
+
+  --text-1: #e2e8f0;
+  --text-2: #94a3b8;
+  --text-3: #64748b;
+
+  --radius:   12px;
+  --radius-sm: 6px;
+  --shadow:   0 8px 32px rgba(0,0,0,0.5);
+  --glow-c:   0 0 24px rgba(6, 182, 212, 0.25);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-1);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Animated Background ── */
+.bg-orb {
+  position: fixed; border-radius: 50%; filter: blur(80px);
+  pointer-events: none; z-index: 0; opacity: 0.12;
+  animation: float 12s ease-in-out infinite alternate;
+}
+.orb-a { width: 420px; height: 420px; top: -100px; left: -80px;
+          background: radial-gradient(circle, #06b6d4, transparent); }
+.orb-b { width: 340px; height: 340px; bottom: -80px; right: -60px;
+          background: radial-gradient(circle, #6366f1, transparent); animation-delay: -6s; }
+.orb-c { width: 220px; height: 220px; top: 45%; left: 50%;
+          background: radial-gradient(circle, #22c55e, transparent); animation-delay: -3s; }
+
+@keyframes float {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(20px, 30px) scale(1.08); }
+}
+
+/* ── Layout ── */
+.wrapper {
+  position: relative; z-index: 1;
+  max-width: 1280px; margin: 0 auto;
+  padding: 0 20px 60px;
+}
+
+/* ── Header ── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 0 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.logo-text { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; }
+.logo-text span { color: var(--accent); }
+.badge-header {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; color: var(--accent); background: rgba(6,182,212,0.1);
+  border: 1px solid rgba(6,182,212,0.3); border-radius: 20px;
+  padding: 4px 12px; letter-spacing: 0.05em;
+}
+
+/* ── Section title ── */
+.section-title {
+  text-align: center; margin-bottom: 28px;
+}
+.section-title h1 {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 700; letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #e2e8f0 30%, var(--accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.section-title p { color: var(--text-2); margin-top: 8px; font-size: 0.95rem; }
+
+/* ── Main grid ── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr 260px;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 1024px) {
+  .main-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Glass cards ── */
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+/* ── Controls Panel ── */
+.panel-title {
+  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 16px;
+}
+
+.control-group { margin-bottom: 16px; }
+.control-label {
+  display: block; font-size: 0.8rem; color: var(--text-2);
+  margin-bottom: 6px; font-weight: 500;
+}
+
+.control-select, .control-input {
+  width: 100%; padding: 9px 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: 'Inter', sans-serif; font-size: 0.85rem;
+  outline: none; transition: border 0.2s;
+  appearance: none;
+}
+.control-select:focus, .control-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(6,182,212,0.15);
+}
+
+/* Speed slider */
+.slider-wrap { display: flex; align-items: center; gap: 8px; }
+input[type=range] {
+  -webkit-appearance: none; flex: 1; height: 4px;
+  background: rgba(255,255,255,0.1); border-radius: 2px; outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent); cursor: pointer;
+  box-shadow: 0 0 8px rgba(6,182,212,0.6);
+}
+.slider-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem; color: var(--accent); min-width: 28px; text-align: right;
+}
+
+/* Tool buttons */
+.tool-group { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.btn-tool {
+  flex: 1; padding: 7px 6px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); background: transparent;
+  color: var(--text-2); font-size: 0.78rem; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.btn-tool:hover { border-color: var(--accent); color: var(--accent); }
+.btn-tool.active { background: rgba(6,182,212,0.15); border-color: var(--accent); color: var(--accent); }
+
+/* Action buttons */
+.btn-action {
+  width: 100%; padding: 10px; margin-bottom: 8px;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 0.88rem; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; letter-spacing: 0.02em;
+}
+.btn-run {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; box-shadow: 0 4px 16px rgba(6,182,212,0.35);
+}
+.btn-run:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(6,182,212,0.5); }
+.btn-run:active { transform: translateY(0); }
+.btn-run:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-stop {
+  background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4);
+  color: var(--danger);
+}
+.btn-stop:hover { background: rgba(239,68,68,0.25); }
+
+.btn-clear {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  color: var(--text-2);
+}
+.btn-clear:hover { border-color: var(--text-2); color: var(--text-1); }
+
+.btn-generate {
+  background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3);
+  color: var(--success);
+}
+.btn-generate:hover { background: rgba(34,197,94,0.22); }
+
+/* Legend */
+.legend { margin-top: 16px; }
+.legend-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.78rem; color: var(--text-2); margin-bottom: 7px;
+}
+.legend-dot {
+  width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0;
+}
+
+/* ── Canvas Area ── */
+.canvas-panel {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.canvas-wrap {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--glow-c);
+  cursor: crosshair;
+}
+canvas { display: block; }
+
+.canvas-hint {
+  font-size: 0.75rem; color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+  text-align: center;
+}
+
+/* ── Stats Panel ── */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.stat-box {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px; text-align: center;
+}
+.stat-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.4rem; font-weight: 600; color: var(--accent);
+  display: block; margin-bottom: 2px;
+}
+.stat-lbl { font-size: 0.72rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Progress bar */
+.progress-wrap { margin-bottom: 16px; }
+.progress-bar-bg {
+  height: 6px; background: rgba(255,255,255,0.07);
+  border-radius: 3px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  transition: width 0.1s linear;
+  width: 0%;
+}
+
+/* Log panel */
+.log-wrap {
+  background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px;
+  max-height: 180px; overflow-y: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; color: var(--text-2); line-height: 1.6;
+}
+.log-wrap::-webkit-scrollbar { width: 4px; }
+.log-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.log-line-accent { color: var(--accent); }
+.log-line-success { color: var(--success); }
+.log-line-warn    { color: var(--warn); }
+.log-line-danger  { color: var(--danger); }
+
+/* ── Algo compare row ── */
+.compare-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin-top: 16px;
+}
+.compare-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.compare-card h4 { font-size: 0.82rem; font-weight: 600; margin-bottom: 8px; }
+.compare-card.bfs h4 { color: var(--warn); }
+.compare-card.astar h4 { color: var(--accent); }
+.compare-metric {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.75rem; color: var(--text-2); margin-bottom: 4px;
+}
+.compare-metric span:last-child {
+  font-family: 'JetBrains Mono', monospace; color: var(--text-1); font-weight: 500;
+}
+
+/* ── Footer ── */
+footer {
+  text-align: center; margin-top: 48px;
+  padding-top: 20px; border-top: 1px solid var(--border);
+  font-size: 0.78rem; color: var(--text-3);
+}
+footer a { color: var(--accent); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }

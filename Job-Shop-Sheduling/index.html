@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Shop Scheduling Optimizer — Particle Swarm Optimization</title>
+    <meta name="description" content="PSO-based Job Shop Scheduling Optimizer with real-world manufacturing presets, manual input, CSV upload, and dynamic Gantt chart visualization.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div class="nav-inner">
+        <div class="nav-logo"><span class="logo-icon">⚙</span> JobShop<span class="accent">PSO</span></div>
+        <div class="nav-status" id="navStatus">Ready</div>
+    </div>
+</nav>
+
+<!-- MAIN LAYOUT -->
+<main class="app-layout">
+
+    <!-- ===== LEFT PANEL: INPUT ===== -->
+    <aside class="panel panel-left" id="panelLeft">
+        <div class="panel-scroll">
+
+            <!-- SCENARIO PRESETS -->
+            <div class="presets-section">
+                <h4>🏭 Real-World Scenario Presets</h4>
+                <select class="preset-select" id="presetSelect">
+                    <option value="">— Select a scenario —</option>
+                    <option value="furniture">🪑 Custom Furniture Workshop</option>
+                    <option value="ev_battery">🔋 EV Battery Pack Assembly</option>
+                    <option value="aerospace">✈️ Aerospace CNC Machining</option>
+                    <option value="textile">🧵 Textile & Garment Production</option>
+                    <option value="ft06">📐 FT06 Standard Benchmark</option>
+                </select>
+                <p class="preset-hint" id="presetHint">Choose a preset to auto-fill realistic job data</p>
+            </div>
+
+            <!-- TAB SWITCHER -->
+            <div class="tab-switcher">
+                <button class="tab-btn active" data-tab="manual" id="tabManual">✏️ Manual Input</button>
+                <button class="tab-btn" data-tab="csv" id="tabCsv">📄 CSV Upload</button>
+            </div>
+
+            <!-- MANUAL INPUT TAB -->
+            <div class="tab-content active" id="manualTab">
+                <div class="input-header">
+                    <h3>Define Jobs & Operations</h3>
+                    <button class="btn btn-sm btn-accent" id="addJobBtn">+ Add Job</button>
+                </div>
+                <div id="jobsContainer"></div>
+            </div>
+
+            <!-- CSV TAB -->
+            <div class="tab-content" id="csvTab">
+                <div class="upload-zone" id="dropZone">
+                    <div class="upload-icon">📁</div>
+                    <p>Drag & drop CSV file here</p>
+                    <p class="upload-sub">or click to browse</p>
+                    <input type="file" id="csvFileInput" accept=".csv" hidden>
+                </div>
+                <div class="csv-format">
+                    <p class="format-label">Expected CSV format:</p>
+                    <code>Job,Operation,Machine,Duration<br>1,1,1,3<br>1,2,3,4<br>...</code>
+                </div>
+                <button class="btn btn-sm btn-ghost" id="downloadSampleBtn" style="width:100%;margin-top:6px">⬇ Download Sample CSV</button>
+            </div>
+
+            <!-- DATA PREVIEW -->
+            <div class="data-preview" id="dataPreview" style="display:none">
+                <h4>📋 Data Preview</h4>
+                <div class="preview-stats" id="previewStats"></div>
+                <div class="preview-table-wrap">
+                    <table class="preview-table" id="previewTable">
+                        <thead><tr><th>Job</th><th>Op</th><th>Machine</th><th>Duration</th></tr></thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PSO SETTINGS -->
+            <div class="settings-section">
+                <h4>🐝 PSO Parameters</h4>
+                <div class="setting-row">
+                    <label>Swarm Size</label>
+                    <input type="number" id="swarmSize" value="80" min="10" max="500" class="setting-input">
+                </div>
+                <div class="setting-row">
+                    <label>Iterations</label>
+                    <input type="number" id="iterations" value="300" min="10" max="3000" class="setting-input">
+                </div>
+                <div class="setting-row">
+                    <label>Inertia Weight (w)</label>
+                    <input type="number" id="inertiaW" value="0.729" min="0.1" max="1.5" step="0.001" class="setting-input">
+                </div>
+                <div class="setting-row">
+                    <label>Cognitive Coeff (c₁)</label>
+                    <input type="number" id="cognitiveC" value="1.494" min="0.1" max="4" step="0.001" class="setting-input">
+                </div>
+                <div class="setting-row">
+                    <label>Social Coeff (c₂)</label>
+                    <input type="number" id="socialC" value="1.494" min="0.1" max="4" step="0.001" class="setting-input">
+                </div>
+            </div>
+
+            <!-- RUN BUTTON -->
+            <button class="btn btn-run" id="runBtn" disabled>
+                <span id="runBtnText">🐝 Run Particle Swarm Optimization</span>
+            </button>
+            <div class="progress-wrap" id="progressWrap" style="display:none">
+                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                <span class="progress-label" id="progressLabel">0%</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ===== CENTER: VISUALIZATION ===== -->
+    <section class="panel panel-center">
+        <!-- EMPTY STATE -->
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">🏭</div>
+            <h2>Job Shop Scheduling Optimizer</h2>
+            <p>Select a real-world scenario preset, define jobs manually, or upload a CSV — then run the Particle Swarm Optimization engine to generate an optimized production schedule.</p>
+            <div class="empty-steps">
+                <div class="step"><span class="step-num">1</span>Pick a scenario or define jobs</div>
+                <div class="step"><span class="step-num">2</span>Configure PSO parameters</div>
+                <div class="step"><span class="step-num">3</span>Run swarm optimization</div>
+                <div class="step"><span class="step-num">4</span>View Gantt chart & results</div>
+            </div>
+        </div>
+
+        <!-- RESULTS (hidden until PSO runs) -->
+        <div class="results-area" id="resultsArea" style="display:none">
+            <!-- METRICS ROW -->
+            <div class="metrics-row" id="metricsRow">
+                <div class="metric-card"><div class="mc-label">Best Makespan</div><div class="mc-value" id="metricMakespan">—</div></div>
+                <div class="metric-card"><div class="mc-label">Best Iteration</div><div class="mc-value" id="metricBestGen">—</div></div>
+                <div class="metric-card"><div class="mc-label">Execution Time</div><div class="mc-value" id="metricTime">—</div></div>
+                <div class="metric-card"><div class="mc-label">Total Operations</div><div class="mc-value" id="metricOps">—</div></div>
+            </div>
+
+            <!-- GANTT CHART -->
+            <div class="gantt-section glass-card">
+                <div class="gantt-header">
+                    <h3>📊 Gantt Chart — Optimized Schedule</h3>
+                    <div class="gantt-actions">
+                        <button class="btn btn-sm btn-ghost" id="downloadScheduleBtn">⬇ Download Schedule</button>
+                    </div>
+                </div>
+                <div class="gantt-legend" id="ganttLegend"></div>
+                <div class="gantt-container" id="ganttContainer"></div>
+                <div class="gantt-time-ruler" id="ganttRuler"></div>
+            </div>
+
+            <!-- CONVERGENCE CHART -->
+            <div class="convergence-section glass-card">
+                <h3>📈 PSO Convergence — Makespan Over Iterations</h3>
+                <canvas id="convergenceCanvas" height="280"></canvas>
+            </div>
+
+            <!-- SCHEDULE TABLE -->
+            <div class="schedule-section glass-card">
+                <h3>📋 Detailed Schedule</h3>
+                <div class="schedule-table-wrap">
+                    <table class="schedule-table" id="scheduleTable">
+                        <thead><tr><th>Machine</th><th>Job</th><th>Operation</th><th>Start</th><th>End</th><th>Duration</th></tr></thead>
+                        <tbody id="scheduleBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

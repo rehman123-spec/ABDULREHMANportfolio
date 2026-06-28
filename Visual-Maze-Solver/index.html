@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Maze Solver & Graph Router — Interactive Demo</title>
+  <meta name="description" content="Interactive browser demo of BFS and A* maze-solving algorithms with live step-by-step animation. Part of the Visual Maze Solver & Graph Router project by RAO ABDUL REHMAN.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Animated background orbs -->
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+  <div class="bg-orb orb-c"></div>
+
+  <div class="wrapper">
+
+    <!-- ── Header ───────────────────────────────────────────────────── -->
+    <header>
+      <div class="logo">
+        <div class="logo-icon">🧭</div>
+        <span class="logo-text">Maze<span>Solver</span></span>
+      </div>
+      <div class="badge-header">Visual Maze Solver &amp; Graph Router</div>
+      <a href="../../rao-abdul-rehman-portfolio/index.html" style="font-size:0.8rem;color:var(--text-2);text-decoration:none;">← Portfolio</a>
+    </header>
+
+    <!-- ── Title ────────────────────────────────────────────────────── -->
+    <div class="section-title">
+      <h1>Visual Maze Solver &amp; Graph Router</h1>
+      <p>Interactive BFS &amp; A* pathfinding — draw your maze, pick an algorithm, watch it solve in real time.</p>
+    </div>
+
+    <!-- ── Main 3-column grid ───────────────────────────────────────── -->
+    <div class="main-grid">
+
+      <!-- ── LEFT: Controls ──────────────────────────────────────────── -->
+      <aside>
+
+        <!-- Algorithm -->
+        <div class="glass-card" style="margin-bottom:16px;">
+          <div class="panel-title">⚙ Algorithm</div>
+
+          <div class="control-group">
+            <label class="control-label" for="algoSelect">Search Algorithm</label>
+            <select class="control-select" id="algoSelect">
+              <option value="astar">A* (Manhattan heuristic)</option>
+              <option value="bfs">BFS (Breadth-First Search)</option>
+              <option value="both">Compare BFS vs A*</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">Animation Speed</label>
+            <div class="slider-wrap">
+              <input type="range" id="speedSlider" min="1" max="50" value="10" step="1">
+              <span class="slider-val" id="speedVal">10x</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Drawing tools -->
+        <div class="glass-card" style="margin-bottom:16px;">
+          <div class="panel-title">✏ Drawing Tools</div>
+          <div class="tool-group">
+            <button class="btn-tool active" data-tool="wall"  id="toolWall" >🧱 Wall</button>
+            <button class="btn-tool"        data-tool="erase" id="toolErase">🧹 Erase</button>
+          </div>
+          <div class="tool-group">
+            <button class="btn-tool"        data-tool="start" id="toolStart">🟢 Start</button>
+            <button class="btn-tool"        data-tool="end"   id="toolEnd"  >🔴 End</button>
+          </div>
+          <p style="font-size:0.72rem;color:var(--text-3);margin-top:8px;">
+            Click &amp; drag on the maze to draw or erase walls.<br>
+            Use Start/End tools to reposition markers.
+          </p>
+        </div>
+
+        <!-- Maze presets -->
+        <div class="glass-card" style="margin-bottom:16px;">
+          <div class="panel-title">🗺 Maze Options</div>
+          <button class="btn-action btn-generate" id="btnGenerate">🎲 Generate New Maze</button>
+          <button class="btn-action btn-clear"    id="btnClear">⬜ Clear Canvas</button>
+        </div>
+
+        <!-- Legend -->
+        <div class="glass-card">
+          <div class="panel-title">🎨 Legend</div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div>Start cell</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div>End cell</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#1a2744;"></div>Wall</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#1e3a5f;"></div>Visited (explored)</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#0891b2;"></div>Current frontier</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#06b6d4;"></div>A* path</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#eab308;"></div>BFS path</div>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- ── CENTER: Canvas ──────────────────────────────────────────── -->
+      <div class="canvas-panel">
+        <div class="canvas-wrap">
+          <canvas id="mazeCanvas" width="490" height="490"></canvas>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress-wrap" style="width:100%;">
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressFill"></div>
+          </div>
+        </div>
+
+        <!-- Run / Stop buttons -->
+        <div style="display:flex;gap:10px;width:100%;">
+          <button class="btn-action btn-run"  id="btnRun"  style="flex:1;margin:0;">▶ Run Solver</button>
+          <button class="btn-action btn-stop" id="btnStop" style="flex:1;margin:0;display:block;" disabled>■ Stop</button>
+        </div>
+
+        <p class="canvas-hint">
+          Draw walls with 🧱, reposition S/E markers, then click ▶ Run Solver.
+        </p>
+
+        <!-- Comparison row (shown in both-mode) -->
+        <div class="compare-row" style="width:100%;">
+          <div class="compare-card bfs">
+            <h4>BFS — Breadth-First</h4>
+            <div class="compare-metric"><span>Explored cells</span><span id="bfsExplored">—</span></div>
+            <div class="compare-metric"><span>Path length</span>   <span id="bfsPath">—</span></div>
+            <div class="compare-metric"><span>Time</span>          <span id="bfsTime">—</span></div>
+            <p style="font-size:0.7rem;color:var(--text-3);margin-top:8px;">
+              Explores all neighbours equally — guaranteed shortest path.
+            </p>
+          </div>
+          <div class="compare-card astar">
+            <h4>A* — Heuristic Search</h4>
+            <div class="compare-metric"><span>Explored cells</span><span id="astarExplored">—</span></div>
+            <div class="compare-metric"><span>Path length</span>   <span id="astarPath">—</span></div>
+            <div class="compare-metric"><span>Time</span>          <span id="astarTime">—</span></div>
+            <p style="font-size:0.7rem;color:var(--text-3);margin-top:8px;">
+              Guides search with Manhattan distance — explores fewer cells, equally optimal.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RIGHT: Stats & Log ──────────────────────────────────────── -->
+      <aside>
+
+        <!-- Stats -->
+        <div class="glass-card" style="margin-bottom:16px;">
+          <div class="panel-title">📊 Run Statistics</div>
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-val" id="statExplored">—</span>
+              <span class="stat-lbl">Explored</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-val" id="statPath">—</span>
+              <span class="stat-lbl">Path Len</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-val" id="statTime" style="font-size:1rem;">—</span>
+              <span class="stat-lbl">Time (ms)</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-val" id="statNodes" style="font-size:1rem;">35×35</span>
+              <span class="stat-lbl">Grid Size</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Algorithm explainer -->
+        <div class="glass-card" style="margin-bottom:16px;">
+          <div class="panel-title">📖 How It Works</div>
+          <p style="font-size:0.8rem;color:var(--text-2);line-height:1.65;margin-bottom:10px;">
+            <strong style="color:var(--warn);">BFS</strong> uses a FIFO queue to explore
+            cells level-by-level. Every cell at distance <em>d</em> is visited before any
+            at distance <em>d+1</em>, guaranteeing the shortest path in an unweighted grid.
+          </p>
+          <p style="font-size:0.8rem;color:var(--text-2);line-height:1.65;">
+            <strong style="color:var(--accent);">A*</strong> adds a heuristic
+            <code style="font-size:0.75rem;">h(n) = |Δrow| + |Δcol|</code>
+            (Manhattan distance) to guide the search toward the goal, dramatically
+            reducing the number of cells explored while still finding the optimal path.
+          </p>
+        </div>
+
+        <!-- Console log -->
+        <div class="glass-card">
+          <div class="panel-title">🖥 Solver Log</div>
+          <div class="log-wrap" id="logPanel"></div>
+        </div>
+
+      </aside>
+
+    </div><!-- /main-grid -->
+
+  </div><!-- /wrapper -->
+
+  <footer>
+    <p>
+      Visual Maze Solver &amp; Graph Router &mdash; by
+      <a href="../index.html">RAO ABDUL REHMAN</a>
+      &nbsp;|&nbsp;
+      JavaScript &middot; HTML5 Canvas &middot; BFS &middot; A*
+    </p>
+  </footer>
+
+  <script src="maze_solver.js"></script>
+</body>
+</html>
